@@ -1,3 +1,5 @@
+interpreter
+compiler
 test.hs
 dist
 dist-*

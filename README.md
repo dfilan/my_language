@@ -2,7 +2,10 @@ Making an interpreter in Haskell for a simple programming language. The language
 
 Note that all data are natural numbers, so 'subtraction' is actually the monus operator: x monus y = x - y if x > y and 0 otherwise.
 
-To evaluate a program on some arguments, in the terminal run `./interpreter path_to_program [1,2,3]`, where `path_to_program` is the file path to your program, and `[1,2,3]` should be replaced by your list of arguments, formatted in the same way (open square bracket, natural numbers separated by commas and no spaces, close square bracket).
+To compile the interpreter, have haskell installed, and then run `ghc --make interpreter.hs`. Then, to evaluate a program on some arguments, in the directory where the compiled interpreter is run
+- `./interpreter path_to_program [1,2,3]` on Mac or Linux
+- `interpreter.exe path_to_program [1,2,3]` on Windows,
+where `path_to_program` is the file path to your program, and `[1,2,3]` should be replaced by your list of arguments, formatted in the same way (open square bracket, natural numbers separated by commas and no spaces, close square bracket).
 
 Changes to the language as defined in the notes:
 - The definition of a routine does not need to include the local variables that the routine use, and its arguments when called can be any expressions, e.g. `F((x+y)*3,0,G(3,x))`.
