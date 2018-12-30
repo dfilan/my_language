@@ -15,15 +15,18 @@ import Control.Monad
 
 import qualified Data.HashMap.Lazy as HM
 
+import Data.Hashable
+
 -- evaluates an atom
 evalAtom :: RutnTable -> ScopeTable -> Atom -> Eval Natural
 evalAtom ruTab scTab = \case{
   NatAtom n       -> Right n;
   VarAtom v       -> varLookup v scTab;
-  RutnAtom r args -> do {
-    routine   <- rutnLookup r ruTab;
-    argValues <- mapM (evalExpr ruTab scTab) args;
-    evalRutn ruTab routine argValues;
+  RutnAtom r (eArgs, rArgs) -> do {
+    routine   <- rutnLookup ruTab r;
+    argValues <- mapM (evalExpr ruTab scTab) eArgs;
+    rutnArgs  <- mapM (rutnLookup ruTab) rArgs;
+    evalRutn ruTab routine argValues rutnArgs;
     };
   }
 
@@ -37,8 +40,8 @@ varLookup v tab = case (HM.lookup v tab) of {
 
 -- look up a routine, returning something in Eval Routine rather than Maybe
 -- Routine
-rutnLookup :: RutnName -> RutnTable -> Eval Routine
-rutnLookup r tab = case (HM.lookup r tab) of {
+rutnLookup :: RutnTable -> RutnName -> Eval Routine
+rutnLookup tab r = case (HM.lookup r tab) of {
   Just rutn -> Right rutn;
   Nothing   -> Left "Tried to look up non-existent routine."
   }
@@ -82,6 +85,7 @@ evalBloc ruTab scTab = \case{
       };
     };
   (ReturnStmt e):sts         -> evalExpr ruTab scTab e;
+  (RutnDef rName rutn):sts  -> evalBloc (HM.insert rName rutn ruTab) scTab sts;
   []                         -> Left "Tried to evaluate a block with no return\
                                       \ statement.";
   }
@@ -93,23 +97,35 @@ updateScope :: (RutnTable -> ScopeTable -> VarName -> Expression
 updateScope ruTab scTab v = (fmap (\n -> HM.insert v n scTab)) . (evalExpr ruTab
                                                                   scTab)
 
--- evaluate a routine
-evalRutn :: RutnTable -> Routine -> [Natural] -> Eval Natural
-evalRutn ruTab (vars, block) args
- | length args == length vars = evalBloc ruTab (mkScTab vars args) block
- | otherwise                  = Left "Provided the wrong number of arguments to\
-                                      \ a routine."
+-- evaluate a routine call
+evalRutn :: RutnTable -> Routine -> [Natural] -> [Routine] -> Eval Natural
+evalRutn ruTab (varNames, rutnNames, block) varArgs rutnArgs
+ | length varArgs /= length varNames   = Left "Provided the wrong number of\
+                                               \ natural-valued arguments to a\
+                                               \ routine."
+ | length rutnArgs /= length rutnNames = Left "Provided the wrong number of\
+                                               \ routine arguments to a\
+                                               \ routine (remember, the main\
+                                               \ routine can accept no routine\
+                                               \ arguments)."
+ | otherwise                           = (evalBloc
+                                          (HM.union (mkRuTab rutnNames
+                                                     rutnArgs)
+                                           ruTab)
+                                          (mkScTab varNames varArgs)
+                                          block)
+
+makeTable :: (Eq k, Hashable k) => [k] -> [v] -> HM.HashMap k v
+makeTable ks vs = HM.fromList $ zip ks vs
 
 mkScTab :: [VarName] -> [Natural] -> ScopeTable
-mkScTab vars nats = mkScTab' HM.empty $ zip vars nats
+mkScTab = makeTable
 
-mkScTab' :: ScopeTable -> [(VarName, Natural)] -> ScopeTable
-mkScTab' scTab = \case{
-  []         -> scTab;
-  pair:pairs -> mkScTab' (uncurry HM.insert pair scTab) pairs;
-  }
+mkRuTab :: [RutnName] -> [Routine] -> RutnTable
+mkRuTab = makeTable
 
 -- to evaluate a program, you get the program and the list of naturals it will
 -- be applied to, then evaluate the main routine on that list
+-- note: the main routine cannot accept any routine arguments
 evalProg :: Program -> [Natural] -> Eval Natural
-evalProg (r, ruTab) args = evalRutn ruTab r args
+evalProg (r, ruTab) varArgs = evalRutn ruTab r varArgs []

@@ -17,7 +17,13 @@ import qualified Data.HashMap.Lazy as HM
 
 -- parser for statements
 stmt :: Parser Statement
-stmt = iteStatement <|> whileStatement <|> returnStatement <|> assignment
+stmt = (
+      iteStatement
+  <|> whileStatement
+  <|> returnStatement
+  <|> rutnDefinition
+  <|> assignment
+      )
 
 assignment :: Parser Statement
 assignment = Assn <$> varName <*> (assign >> expr)
@@ -39,14 +45,23 @@ whileStatement = WhileStmt <$> (whileToken >> inParens expr) <*> inBraces bloc
 returnStatement :: Parser Statement
 returnStatement = ReturnStmt <$> (returnToken >> expr)
 
+rutnDefinition :: Parser Statement
+rutnDefinition = RutnDef <$> rutnName <*> ((uncurry (,,))
+                                           <$> (inParens $
+                                                (,) <$> sepBy varName com
+                                                <*> (option []
+                                                     (sem >> sepBy rutnName com)
+                                                    )
+                                               )
+                                           <*> inBraces bloc)
+
 -- parser for blocks
 bloc :: Parser Block
 bloc = sepEndBy stmt sem
 
 -- parser for routines and their names
 rutn :: Parser (RutnName, Routine)
-rutn = (,) <$> rutnName <*> ((,) <$> (inParens $ sepBy varName com)
-                             <*> inBraces bloc)
+rutn = (\(RutnDef a b) -> (a,b)) <$> rutnDefinition
 
 -- parser for programs
 prog :: Parser Program

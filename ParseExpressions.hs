@@ -32,7 +32,10 @@ var :: Parser Atom
 var = fmap VarAtom varName
 
 rutnCall :: Parser Atom
-rutnCall = RutnAtom <$> rutnName <*> (inParens $ sepBy expr com);
+rutnCall = RutnAtom <$> rutnName <*> (inParens readRutnArgs)
+
+readRutnArgs :: Parser ([Expression], [RutnName])
+readRutnArgs = (,) <$> sepBy expr com <*> option [] (sem >> sepBy rutnName com)
 
 -- parser for terms
 term :: Parser Term

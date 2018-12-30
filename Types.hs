@@ -1,3 +1,4 @@
+-- TODO: rewrite Evaluate to use the reader monad
 -- TODO: add for loops
 -- TODO: use chainl1 instead of recursion in my expression grammar
 -- note: amazingly, this only works if I make expressions, terms, and atoms
@@ -86,9 +87,10 @@ data Symbol = Assign -- assignment sign, ':='
 -- slot stores both the main routine and all other routines.
 type Program = (Routine, RutnTable)
 
--- a routine is a list of the routine's arguments, and then a block of
--- statements.
-type Routine = ([VarName], Block)
+-- a routine is two list of the routine's arguments, and then a block of
+-- statements. arguments to routines can be variables or other routines, so the
+-- first list is of variable arguments, and the second is of routine arguments.
+type Routine = ([VarName], [RutnName], Block)
 
 -- we're also going to keep a routine table associating routine names with the
 -- routines that they're associated with
@@ -102,7 +104,8 @@ data Statement  = Assn VarName Expression
                 | ITEStmt Expression Block Block
                 | WhileStmt Expression Block
                 | ReturnStmt Expression
-                deriving (Eq, Show)
+                | RutnDef RutnName Routine -- Routines can be defined locally
+                deriving (Eq, Show)        -- inside routines
 
 data Expression = Expr Term | ExprComb Term LowPrioOp Expression
                 deriving (Eq, Show)
@@ -113,7 +116,7 @@ data Term       = Trm Atom | TrmComb Atom HighPrioOp Term | ParenTrm Expression
 
 data Atom       = NatAtom Natural
                 | VarAtom VarName
-                | RutnAtom RutnName [Expression]
+                | RutnAtom RutnName ([Expression], [RutnName])
                 deriving (Eq, Show)
 
 -- data type that allows for errors that can show up during execution. Because
