@@ -1,0 +1,11 @@
+main FancyAdd(x,y) {
+    return ApplyTwo(x,y;AddTwo);
+}
+
+ApplyTwo(x, y; Function) {
+    return Function(x,y);
+}
+
+AddTwo(x,y) {
+    return x + y;
+}
