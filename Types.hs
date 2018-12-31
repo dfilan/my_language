@@ -16,26 +16,25 @@ module Types
        , lpOpFunc
        , hpOpFunc
        , VarName
-       , RutnName
-       , ScopeTable
-       , RutnTable
        , ReservedName(..)
        , Symbol(..)
+       , ScopeTable
        , Program
-       , Block
        , Routine
+       , Block
        , Statement(..)
        , Expression(..)
        , Term(..)
        , Atom(..)
        , Eval
+       , Type(..)
+       , Value(..)
+       , TypedValue
        ) where
 
 import Numeric.Natural
 
 import qualified Data.HashMap.Lazy as HM
-
-import Text.Parsec.Pos
 
 -- data types for operations by how much precedence they have
 data LowPrioOp = Plus | Monus deriving (Eq, Show)
@@ -51,25 +50,19 @@ lpOpFunc Monus m n
 hpOpFunc :: HighPrioOp -> Natural -> Natural -> Natural
 hpOpFunc Times m n = m * n
 
+---------------------------------------------------------------------------------
+-- data types representing things that can be in programs -----------------------
+---------------------------------------------------------------------------------
+
 -- defining a data type for variable names.
 -- secretly, they're actually going to be strings that consist entirely of
 -- alphabetic unicode characters that don't start with upper or title case
 type VarName = String
 
--- defining a data type for routine names.
--- secretly, they're actually going to be strings that consist entirely of
--- alphabetic unicode characters that start with *upper* (or title) case
-type RutnName = String
-
--- while we're interpreting the program, we're going to keep a scope table
--- associating variable names with the values that they hold
-type ScopeTable = HM.HashMap VarName Natural
-
 data ReservedName = If
                   | Else
                   | While
                   | Return
-                  | Main
                   deriving (Eq, Show)
 
 data Symbol = Assign -- assignment sign, ':='
@@ -79,22 +72,25 @@ data Symbol = Assign -- assignment sign, ':='
             | Kel -- left brace, '{'
             | Ker -- right brace, '}'
             | Com -- comma, ','
+            | Lambda -- lambda, '\'
 
--- data types representing the grammar of programs that we accept
+-- while we're interpreting the program, we're going to keep a scope table
+-- associating variable names with the values that they hold
+type ScopeTable = HM.HashMap VarName TypedValue
 
--- a program is a main routine and some auxiliary routines.
--- the main routine is kept in the first slot, the routine table in the second
--- slot stores both the main routine and all other routines.
-type Program = (Routine, RutnTable)
+--------------------------------------------------------------------------------
+-- data types representing the grammar of programs that we accept --------------
+--------------------------------------------------------------------------------
 
--- a routine is two list of the routine's arguments, and then a block of
--- statements. arguments to routines can be variables or other routines, so the
--- first list is of variable arguments, and the second is of routine arguments.
-type Routine = ([VarName], [RutnName], Block)
+-- a program is just a list of all globally-defined routine names and the
+-- routines that they represent.
+-- one of the routines should be called main, and that routine will be the one
+-- that actually gets evaluated
+type Program = [(VarName, Routine)]
 
--- we're also going to keep a routine table associating routine names with the
--- routines that they're associated with
-type RutnTable = HM.HashMap RutnName Routine
+-- a routine is a list of the routine's arguments, and then a block of
+-- statements.
+type Routine = ([VarName], Block)
 
 -- a block is just a bunch of statements, one of which should probably be a
 -- return statement
@@ -104,22 +100,40 @@ data Statement  = Assn VarName Expression
                 | ITEStmt Expression Block Block
                 | WhileStmt Expression Block
                 | ReturnStmt Expression
-                | RutnDef RutnName Routine -- Routines can be defined locally
-                deriving (Eq, Show)        -- inside routines
-
-data Expression = Expr Term | ExprComb Term LowPrioOp Expression
                 deriving (Eq, Show)
 
--- below, ParenTrm Expression means an expression with parens on either side
-data Term       = Trm Atom | TrmComb Atom HighPrioOp Term | ParenTrm Expression
+data Expression = Expr Term
+                | ExprComb Term LowPrioOp Expression
+                deriving (Eq, Show)
+
+data Term       = Trm Atom
+                | TrmComb Atom HighPrioOp Term
+                | ParenTrm Expression -- an expression with parens on either side
                 deriving (Eq, Show)
 
 data Atom       = NatAtom Natural
+                | LambdaAtom [VarName] Block
                 | VarAtom VarName
-                | RutnAtom RutnName ([Expression], [RutnName])
+                | RutnCallAtom VarName [Expression]
                 deriving (Eq, Show)
+
+---------------------------------------------------------------------------------
+-- data types that represent evaluations of things ------------------------------
+---------------------------------------------------------------------------------
 
 -- data type that allows for errors that can show up during execution. Because
 -- of the structure of the either type, somebody running an invalid program
 -- will only see the first error that shows up during execution
 type Eval a = Either String a
+
+-- types that things in the program can have
+data Type = NatType
+          | FuncType Type Type
+          deriving (Eq, Show)
+
+-- values that things in the program can take on
+data Value = NatValue Natural
+           | RutnValue Routine
+
+-- type-value pairs, which will be stored in the scope table
+type TypedValue = (Type, Value)

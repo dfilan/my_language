@@ -23,19 +23,19 @@ inBraces = between kel ker
 -- parser for atoms
 
 atom :: Parser Atom
-atom = nat <|> var <|> rutnCall
+atom = nat <|> (try rutnCall) <|> var
 
 nat :: Parser Atom
-nat = fmap NatAtom natural
+nat = NatAtom <$> natural
+
+-- lambdaAtom :: Parser Atom
+-- lambdaAtom = LambdaAtom <$> (inParens $ sepBy varName com)
 
 var :: Parser Atom
-var = fmap VarAtom varName
+var = VarAtom <$> varName
 
 rutnCall :: Parser Atom
-rutnCall = RutnAtom <$> rutnName <*> (inParens readRutnArgs)
-
-readRutnArgs :: Parser ([Expression], [RutnName])
-readRutnArgs = (,) <$> sepBy expr com <*> option [] (sem >> sepBy rutnName com)
+rutnCall = RutnCallAtom <$> varName <*> (inParens $ sepBy expr com)
 
 -- parser for terms
 term :: Parser Term

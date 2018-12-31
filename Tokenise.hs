@@ -1,10 +1,13 @@
 -- exports a bunch of parsers for things that are single tokens.
 module Tokenise
-       ( natural
-       , varName
-       , rutnName
-       , lpop
+       ( lpop
        , hpop
+       , varName
+       , natural
+       , ifToken
+       , elseToken
+       , whileToken
+       , returnToken
        , assign
        , sem
        , pal
@@ -12,11 +15,7 @@ module Tokenise
        , kel
        , ker
        , com
-       , ifToken
-       , elseToken
-       , whileToken
-       , returnToken
-       , mainToken
+       , lambda
        ) where
 
 import Numeric.Natural
@@ -32,7 +31,10 @@ import Text.Parsec.Char
 
 import Types
 
+--------------------------------------------------------------------------------
 -- helper functions
+--------------------------------------------------------------------------------
+
 thenSpaces :: a -> Parser a
 thenSpaces = \x -> (spaces >> return x)
 
@@ -48,16 +50,11 @@ stringToNatural = fromIntegral . digitsToNum . map digitToInt
 digitsToNum :: [Int] -> Int
 digitsToNum = foldl (\acc n -> n + 10 * acc) 0
 
+--------------------------------------------------------------------------------
 -- token parsers
-natural :: Parser Natural
-natural = stringToNatural <$> many1 digit >>= thenSpaces
+--------------------------------------------------------------------------------
 
-varName :: Parser VarName
-varName = liftM2 (:) lower (many alphaNum) >>= thenSpaces
-
-rutnName :: Parser RutnName
-rutnName = liftM2 (:) upper (many alphaNum) >>= thenSpaces
-
+-- operations
 lpop :: Parser LowPrioOp
 lpop = plus <|> monus
 
@@ -70,6 +67,28 @@ monus = singleCharToken Monus '-'
 hpop :: Parser HighPrioOp
 hpop = singleCharToken Times '*'
 
+-- variable names
+varName :: Parser VarName
+varName = liftM2 (:) lower (many alphaNum) >>= thenSpaces
+
+-- values
+natural :: Parser Natural
+natural = stringToNatural <$> many1 digit >>= thenSpaces
+
+-- reserved names
+ifToken :: Parser ReservedName
+ifToken = try $ stringToken If "if"
+
+elseToken :: Parser ReservedName
+elseToken = try $ stringToken Else "else"
+
+whileToken :: Parser ReservedName
+whileToken = try $ stringToken While "while"
+
+returnToken :: Parser ReservedName
+returnToken = try $ stringToken Return "return"
+
+-- symbols
 assign :: Parser Symbol
 assign = stringToken Assign ":="
 
@@ -91,17 +110,5 @@ ker = singleCharToken Ker '}'
 com :: Parser Symbol
 com = singleCharToken Com ','
 
-ifToken :: Parser ReservedName
-ifToken = try $ stringToken If "if"
-
-elseToken :: Parser ReservedName
-elseToken = try $ stringToken Else "else"
-
-whileToken :: Parser ReservedName
-whileToken = try $ stringToken While "while"
-
-returnToken :: Parser ReservedName
-returnToken = try $ stringToken Return "return"
-
-mainToken :: Parser ReservedName
-mainToken = try $ stringToken Main "main"
+lambda :: Parser Symbol
+lambda = singleCharToken Lambda '\\'
