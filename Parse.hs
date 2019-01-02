@@ -11,14 +11,15 @@ import Tokenise
 import Text.Parsec
 import Text.Parsec.String
 
-import qualified Data.HashMap.Lazy as HM
-
 --------------------------------------------------------------------------------
 -- helper functions
 --------------------------------------------------------------------------------
 
 inParens :: Parser a -> Parser a
 inParens = between pal par
+
+maybeInParens :: Parser a -> Parser a
+maybeInParens p = inParens p <|> p
 
 inBraces :: Parser a -> Parser a
 inBraces = between kel ker
@@ -34,9 +35,19 @@ nat :: Parser Atom
 nat = NatAtom <$> natural
 
 lambdaAtom :: Parser Atom
-lambdaAtom = (LambdaAtom
-              <$> (lambda >> (inParens $ sepBy varName com))
-              <*> inBraces bloc)
+lambdaAtom = LambdaAtom <$> ((,,)
+              <$> (lambda >> (inParens $ sepBy varType com))
+              <*> inBraces bloc
+              <*> (col >> readType))
+
+varType :: Parser (VarName, Type)
+varType = (,) <$> varName <*> (col >> readType)
+
+readType :: Parser Type
+readType = maybeInParens $ (try readFuncType) <|> natType
+
+readFuncType :: Parser Type
+readFuncType = FuncType <$> readType <*> (arrow >> readType)
 
 var :: Parser Atom
 var = VarAtom <$> varName
@@ -117,8 +128,7 @@ bloc = sepEndBy stmt sem
 --------------------------------------------------------------------------------
 
 rutn :: Parser (VarName, Routine)
-rutn = (,) <$> varName <*> ((\(LambdaAtom vs b) -> (vs, b))
-                            <$> (assign >> lambdaAtom))
+rutn = (,) <$> varName <*> ((\(LambdaAtom x) -> x) <$> (assign >> lambdaAtom))
 
 --------------------------------------------------------------------------------
 -- parser for programs

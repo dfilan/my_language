@@ -16,6 +16,9 @@ module Tokenise
        , ker
        , com
        , lambda
+       , col
+       , arrow
+       , natType
        ) where
 
 import Numeric.Natural
@@ -112,3 +115,14 @@ com = singleCharToken Com ','
 
 lambda :: Parser Symbol
 lambda = singleCharToken Lambda '\\'
+
+col :: Parser Symbol
+col = singleCharToken Col ':'
+
+arrow :: Parser Symbol
+arrow = stringToken Arrow "->"
+
+-- types
+
+natType :: Parser Type
+natType = stringToken NatType "Nat"
