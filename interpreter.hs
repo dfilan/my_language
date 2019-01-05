@@ -20,11 +20,9 @@ readNatList :: String -> Eval [Natural]
 readNatList = readEither
 
 main :: IO ()
-main = do {
-    args    <- getArgs;
-    program <- parseFromFile prog $ head args;
-    case program of {
-      Left err -> print err;
-      Right pr -> print $ (readNatList (args!!1)) >>= (evalProg pr);
-      };
-}
+main = do
+  args    <- getArgs
+  program <- parseFromFile prog $ head args
+  case program of
+   Left err -> print err
+   Right pr -> print $ (readNatList (args!!1)) >>= (evalProg pr)
