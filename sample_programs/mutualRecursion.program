@@ -1,13 +1,17 @@
-main IsEven(n) {
+main := \(n : Nat) {
+    return isEven(n);
+} : Nat
+
+isEven := \(n: Nat) {
     if (1-n) {
         return 1
     };
-    return IsOdd(n-1)
-}
+    return isOdd(n-1);
+} : Nat
 
-IsOdd(n) {
+isOdd := \(n : Nat) {
     if (1-n) {
         return 0;
     };
-    return IsEven(n-1)
-}
+    return isEven(n-1)
+}: Nat
