@@ -81,6 +81,7 @@ readRutnType (varsTypes, _, retType) = foldr FuncType retType types
 
 typeBlock :: Block -> Type -> TypeTable -> Eval TypeTable
 typeBlock block retType table = case block of
+  []                         -> Right table
   (Assn v e):sts             -> (staticInsert table v e) >>= (typeBlock sts
                                                               retType)
   (ITEStmt e sts1 sts2):sts3 -> if exprType table e == Right NatType
@@ -96,7 +97,7 @@ typeBlock block retType table = case block of
   (ReturnStmt e):sts         -> if exprType table e == Right retType
                                 then typeBlock sts retType table
                                 else Left "Returned a value of the incorrect\
-                                           \ type."       
+                                           \ type."
 
 rutnType :: TypeTable -> Routine -> Eval Type
 rutnType table rutn = (evalBoth (Right $ readRutnType rutn)
