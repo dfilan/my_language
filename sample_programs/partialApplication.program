@@ -1,0 +1,16 @@
+applyFirstOfTwo := \(f : Nat -> Nat -> Nat, n : Nat) {
+    return f(n)
+} : Nat -> Nat
+
+apply := \(f : Nat -> Nat, n : Nat) {
+    return f(n)
+} : Nat
+
+plus := \(m : Nat, n : Nat) {
+    return m + n;
+} : Nat
+
+main := \(m : Nat, n : Nat) {
+    f := applyFirstOfTwo(plus, m);
+    return apply(f,n)
+} : Nat

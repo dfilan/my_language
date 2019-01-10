@@ -24,6 +24,8 @@ main :: IO ()
 main = do
   args    <- getArgs
   program <- parseFromFile prog $ head args
+  -- print program
   case program of
    Left err -> print err
-   Right pr -> print $ (progType pr) >> (readNatList (args!!1)) >>= (evalProg pr)
+   Right pr -> print ((progType pr) >>
+                      (readNatList (args!!1)) >>= (evalProg pr))
