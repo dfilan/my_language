@@ -44,10 +44,10 @@ varType :: Parser (VarName, Type)
 varType = (,) <$> varName <*> (col >> readType)
 
 readType :: Parser Type
-readType = maybeInParens $ (try readFuncType) <|> natType
+readType = (try readFuncType) <|> natType
 
 readFuncType :: Parser Type
-readFuncType = FuncType <$> readType <*> (arrow >> readType)
+readFuncType = FuncType <$> (inParens readType <|> natType) <*> (arrow >> readType)
 
 var :: Parser Atom
 var = VarAtom <$> varName
