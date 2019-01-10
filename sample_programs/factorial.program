@@ -1,4 +1,4 @@
-main F(n) {
+main := \(n : Nat) {
      v := 1;
      k := 1;
      c := n-k;
@@ -8,4 +8,4 @@ main F(n) {
 	   c := n - k
      };
      return 1*(v+0)
-}
+} : Nat
