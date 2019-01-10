@@ -18,6 +18,7 @@ module Types
        , ReservedName(..)
        , Symbol(..)
        , ScopeTable
+       , TypeTable
        , Program
        , Routine
        , Block
@@ -28,7 +29,6 @@ module Types
        , Eval
        , Type(..)
        , Value(..)
-       , TypedValue
        ) where
 
 import Numeric.Natural
@@ -40,14 +40,16 @@ data LowPrioOp = Plus | Monus deriving (Eq, Show)
 data HighPrioOp = Times deriving (Eq, Show)
 
 -- functions to take operators and return the operations that they represent
-lpOpFunc :: LowPrioOp -> Natural -> Natural -> Natural
-lpOpFunc Plus m n  = m + n
-lpOpFunc Monus m n
-    | m > n     = m - n
-    | otherwise = 0
+-- note: we need to be careful to only call these when we're sure that the
+-- values are of the right type
+lpOpFunc :: LowPrioOp -> Value -> Value -> Value
+lpOpFunc Plus (NatValue m) (NatValue n)  = NatValue $ m + n
+lpOpFunc Monus (NatValue m) (NatValue n)
+    | m > n     = NatValue $ m - n
+    | otherwise = NatValue 0
 
-hpOpFunc :: HighPrioOp -> Natural -> Natural -> Natural
-hpOpFunc Times m n = m * n
+hpOpFunc :: HighPrioOp -> Value -> Value -> Value
+hpOpFunc Times (NatValue m) (NatValue n) = NatValue $ m * n
 
 --------------------------------------------------------------------------------
 -- data types representing things that can be in programs ----------------------
@@ -77,7 +79,10 @@ data Symbol = Assign -- assignment sign, ':='
 
 -- while we're interpreting the program, we're going to keep a scope table
 -- associating variable names with the values that they hold
-type ScopeTable = HM.HashMap VarName TypedValue
+type ScopeTable = HM.HashMap VarName Value
+
+-- we'll also keep a table of what type everything is
+type TypeTable = HM.HashMap VarName Type
 
 --------------------------------------------------------------------------------
 -- data types representing the grammar of programs that we accept --------------
@@ -136,6 +141,3 @@ data Type = NatType
 -- values that things in the program can take on
 data Value = NatValue Natural
            | RutnValue Routine
-
--- type-value pairs, which will be stored in the scope table
-type TypedValue = (Type, Value)

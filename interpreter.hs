@@ -4,7 +4,8 @@
 -- these operations are right-associative: x + y + z = x + (y + z)
 
 import Types
-import ParsePrograms
+import Parse
+import EvalTypes
 import Evaluate
 
 import Text.Read
@@ -25,4 +26,4 @@ main = do
   program <- parseFromFile prog $ head args
   case program of
    Left err -> print err
-   Right pr -> print $ (readNatList (args!!1)) >>= (evalProg pr)
+   Right pr -> print $ (progType pr) >> (readNatList (args!!1)) >>= (evalProg pr)
