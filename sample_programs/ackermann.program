@@ -1,11 +1,11 @@
-main Ack(m,x) {
+main := \(m: Nat, x: Nat) {
     if (1-m) {
         return x + 2
     } else {
 	if (1-x) {
-	    return Ack(m - 1, Ack(m - 1, 0))
+	    return main(m - 1, main(m - 1, 0))
 	} else {
-	    return Ack(m - 1, Ack(m, x - 1))
+	    return main(m - 1, main(m, x - 1))
 	}
     }
-}
+} : Nat
