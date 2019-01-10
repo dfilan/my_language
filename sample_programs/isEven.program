@@ -1,12 +1,12 @@
-main IsEven(n) {
+main := \(n: Nat) {
      if (n) {
      	nMonusOne := n - 1;
 	if (nMonusOne) {
 	    v := n - 2;
-	    return IsEven(n-2);
+	    return main(n-2);
 	} else {
 	    return 0;
 	}
-     }
+     };
      return 1;
-}
+} : Nat
