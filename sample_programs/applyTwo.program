@@ -1,11 +1,11 @@
-main FancyAdd(x,y) {
-    return ApplyTwo(x,y;AddTwo);
-}
+main := \(x : Nat, y : Nat) {
+    return applyTwo(x, y, addTwo)
+}: Nat
 
-ApplyTwo(x, y; Function) {
-    return Function(x,y);
-}
+applyTwo := \(x: Nat, y: Nat, f: Nat -> Nat -> Nat) {
+    return f(x,y);
+} : Nat
 
-AddTwo(x,y) {
+addTwo := \(x : Nat,y:Nat) {
     return x + y;
-}
+}: Nat
